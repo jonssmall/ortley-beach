@@ -1,4 +1,5 @@
-import { load, save, invalidate, session, uid, STORAGE_KEY } from './store.js';
+import { load, save, invalidate, session, uid, currentTerm, STORAGE_KEY } from './store.js';
+import { initJoin, wireJoin } from './join.js';
 import {
   $, $$, esc, fmtDate, fmtLong, fmtMonth, daysUntil, relDays, nextOnOrAfter, parseDate, today,
   sanitize, toast, icsFile, initials, isoToday,
@@ -16,7 +17,7 @@ const NAV = [
 
 // Where "Edit this page" sends a signed-in admin.
 const EDIT_TARGET = {
-  home: 'home', about: 'pages', meetings: 'meetings', news: 'posts', resources: 'links', membership: 'settings',
+  home: 'home', about: 'pages', meetings: 'meetings', news: 'posts', resources: 'links', membership: 'members',
 };
 
 function render() {
@@ -484,34 +485,11 @@ const PAGES = {
 
   membership(d) {
     const s = d.settings;
-    const app = d.documents.find((x) => x.category === 'Membership');
     return `
-      ${pageHead('Join ' + s.shortName, `Membership is $${s.fee} a year (${s.membershipYear}). Renew or join online in two minutes.`, 'assets/img/boat-launch.jpg')}
+      ${pageHead('Join or renew', `Membership is $${s.fee} a year and runs ${currentTerm().label}. It takes about a minute.`, 'assets/img/boat-launch.jpg')}
       <section class="section">
         <div class="wrap split split-wide">
-          <form class="card pad form" data-form="membership">
-            <h2>Membership form</h2>
-            <fieldset class="seg">
-              <legend class="sr">Membership type</legend>
-              <label><input type="radio" name="kind" value="New member" checked><span>New member</span></label>
-              <label><input type="radio" name="kind" value="Renewal"><span>Renewing</span></label>
-            </fieldset>
-            <div class="row2">
-              <label>Full name(s)<input name="name" required autocomplete="name"></label>
-              <label>Email<input name="email" type="email" required autocomplete="email"></label>
-            </div>
-            <div class="row2">
-              <label>Phone<input name="phone" type="tel" required autocomplete="tel"></label>
-              <label>Ortley Beach address<input name="address" required placeholder="Street address"></label>
-            </div>
-            <label class="check"><input type="checkbox" name="committee"> I'm interested in joining a committee</label>
-            <div class="paybox">
-              <div><strong>Annual dues</strong><span class="muted small">${esc(s.membershipYear)}</span></div>
-              <strong class="price">$${esc(s.fee)}.00</strong>
-            </div>
-            <button class="btn btn-coral btn-block" type="submit">Continue to secure payment</button>
-            <p class="small muted center">Demo site: no payment is taken. The live site would hand off to Stripe or PayPal here.</p>
-          </form>
+          <div class="card pad join" data-join></div>
           <div>
             <h3>What your $${esc(s.fee)} does</h3>
             <ul class="ticks">
@@ -519,10 +497,10 @@ const PAGES = {
               <li><strong>Supports the work.</strong> Dues fund meeting space, mailings and our advocacy with Toms River, Ocean County and the State.</li>
             </ul>
             <div class="card pad">
-              <h3>Prefer paper?</h3>
-              <p>Print the ${app ? `<a href="${esc(app.url)}" target="_blank" rel="noopener">${esc(app.title)}</a>` : 'membership application'} and mail it with a $${esc(s.fee)} check to:</p>
-              <p><strong>${esc(s.shortName)}</strong><br>${esc(s.mailing)}</p>
-              <p class="small muted">No printer? Just mail a check with your email, Ortley Beach address and phone number.</p>
+              <h3>Good to know</h3>
+              <p>Everyone uses the same form, whether you're new or renewing. If we already have your details, we fill them in.</p>
+              <p>You can pay online or mail a check. Both options are on the payment step.</p>
+              <p class="small muted">Questions? Email <a href="mailto:${esc(s.email)}">${esc(s.email)}</a>.</p>
             </div>
           </div>
         </div>
@@ -638,6 +616,9 @@ function wire(d) {
     $$('[data-res]').forEach((li) => { li.hidden = !li.dataset.res.includes(q); });
     $$('.linkgroup').forEach((g) => { g.hidden = !$$('[data-res]', g).some((li) => !li.hidden); });
   });
+
+  const join = $('[data-join]');
+  if (join) { initJoin(join); wireJoin(); }
 
   // Forms land in the dashboard inbox.
   $$('form[data-form]').forEach((f) => f.addEventListener('submit', (e) => {

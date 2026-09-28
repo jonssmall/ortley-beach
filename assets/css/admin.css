@@ -208,3 +208,13 @@ body.admin { background: #f3f5f7; }
 .savebar .btn-ghost { color: #fff; border-color: rgba(255, 255, 255, .3); }
 .savebar .btn-ghost:hover { border-color: #fff; color: #fff; }
 @media (max-width: 900px) { .savebar { left: 50%; } .savebar span { display: none; } }
+
+/* Members and emails */
+button.tile { font: inherit; text-align: left; cursor: pointer; }
+.status-current::before { background: #2e9e6a; }
+.status-expired::before { background: #b3261e; }
+.status-pending::before { background: #d8a40f; }
+.emails-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.25rem; align-items: start; }
+.emails-grid [data-preview] { padding: 0; overflow: hidden; border: 0; background: none; }
+@media (max-width: 1000px) { .emails-grid { grid-template-columns: 1fr; } }
+.phead-r .btn:disabled { opacity: .5; cursor: not-allowed; }

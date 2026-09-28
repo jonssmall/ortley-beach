@@ -1,4 +1,5 @@
-import { load, save, reset, invalidate, session, activity, uid, PHOTOS, STORAGE_KEY } from './store.js';
+import { load, save, reset, invalidate, session, activity, uid, PHOTOS, STORAGE_KEY, currentTerm, memberStatus } from './store.js';
+import { emailPreview } from './join.js';
 import {
   $, $$, esc, fmtDate, fmtLong, fmtMonth, daysUntil, relDays, nextOnOrAfter, parseDate, today,
   sanitize, toast, isoToday,
@@ -24,6 +25,8 @@ const SECTIONS = [
   ['pages', 'About pages', 'M6 3h9l4 4v14H6zM9 12h7M9 16h7'],
   ['documents', 'Documents', 'M7 3h7l5 5v13H7zM14 3v5h5'],
   ['links', 'Useful links', 'M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1'],
+  ['members', 'Members', 'M16 11a3 3 0 100-6 3 3 0 000 6zM8 13a3 3 0 100-6 3 3 0 000 6zM2 20a6 6 0 0112 0M12 20a5 5 0 0110 0'],
+  ['emails', 'Member emails', 'M3 6h18v12H3zM3 6l9 7 9-7'],
   ['inbox', 'Inbox', 'M3 13l3-8h12l3 8v6H3zM3 13h5l1 2h6l1-2h5'],
   ['settings', 'Settings', 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12l2-1-1-3-2 .3-1.5-1.5L17 5l-3-1-1 2h-2l-1-2-3 1 .5 1.8L6 8.3 4 8 3 11l2 1v0l-2 1 1 3 2-.3 1.5 1.5L7 19l3 1 1-2h2l1 2 3-1-.5-1.8 1.5-1.5 2 .3 1-3z'],
 ];
@@ -156,20 +159,23 @@ const VIEWS = {
     const missing = d.meetings.schedule.filter((x) => parseDate(x) < t && !d.meetings.archive.some((a) => a.month === x.slice(0, 7) && a.minutes));
     const drafts = d.posts.filter((p) => p.status !== 'published');
     const unread = d.inbox.filter((x) => !x.read);
-    const joins = d.inbox.filter((x) => x.type === 'membership');
     const log = activity();
+    const pendingChecks = draft.members.filter((m) => memberStatus(m) === 'pending');
+    const lapsed = draft.members.filter((m) => memberStatus(m) === 'expired' && !m.remindedAt);
     const todo = [
+      ...(pendingChecks.length ? [{ text: `${pendingChecks.length} membership check${pendingChecks.length === 1 ? '' : 's'} to log when they arrive`, href: '#members' }] : []),
+      ...(lapsed.length ? [{ text: `Remind ${lapsed.length} lapsed member${lapsed.length === 1 ? '' : 's'} to renew`, href: '#members' }] : []),
       ...missing.map((x) => ({ text: `Post minutes for the ${fmtDate(x, { month: 'long', day: 'numeric' })} meeting`, href: '#meetings/archive' })),
       ...(!next ? [{ text: 'Add next season\'s meeting dates', href: '#meetings' }] : []),
       ...drafts.map((p) => ({ text: `Finish draft: ${p.title}`, href: `#posts/${p.id}` })),
-      ...unread.map((m) => ({ text: `${m.type === 'membership' ? 'New membership' : 'Message'} from ${m.name}`, href: '#inbox' })),
+      ...unread.map((m) => ({ text: `${m.type === 'membership' ? (m.kind === 'Renewal' ? 'Renewal' : m.kind === 'Donation' ? 'Donation' : 'New member') : 'Message'} from ${m.name}`, href: '#inbox' })),
     ];
     return head(`Good ${greeting()}, admin`, 'Here is what needs attention on the site.') + `
       <div class="tiles">
         <a class="tile" href="#meetings"><span>Next meeting</span><strong>${next ? fmtDate(next, { month: 'short', day: 'numeric' }) : 'None set'}</strong><small>${next ? relDays(daysUntil(next)) : 'Add dates for next season'}</small></a>
         <a class="tile" href="#posts"><span>Published posts</span><strong>${d.posts.filter((p) => p.status === 'published').length}</strong><small>${drafts.length} draft${drafts.length === 1 ? '' : 's'}</small></a>
         <a class="tile" href="#inbox"><span>Unread inbox</span><strong>${unread.length}</strong><small>${d.inbox.length} total</small></a>
-        <a class="tile" href="#inbox"><span>Online sign-ups</span><strong>${joins.length}</strong><small>$${joins.length * d.settings.fee} in dues</small></a>
+        <a class="tile" href="#members"><span>Current members</span><strong>${d.members.filter((m) => memberStatus(m) === 'current').length}</strong><small>${d.members.filter((m) => memberStatus(m) === 'expired').length} not yet renewed</small></a>
       </div>
       <div class="dash-grid">
         <section class="panel">
@@ -388,7 +394,7 @@ const VIEWS = {
     const f = sessionStorage.getItem('adm-inbox-filter') || 'all';
     const items = draft.inbox.filter((x) => f === 'all' || x.type === f);
     return head('Inbox', 'Membership sign-ups and messages sent from the website.',
-      '<button type="button" class="btn btn-ghost btn-sm" data-export>Export members (CSV)</button>') + `
+      '<a class="btn btn-ghost btn-sm" href="#members">See all members</a>') + `
       <div class="chips" style="margin-bottom:1rem">
         ${[['all', 'All'], ['membership', 'Memberships'], ['message', 'Messages']].map(([k, l]) => `<button type="button" class="chip ${f === k ? 'on' : ''}" data-inbox-filter="${k}">${l}</button>`).join('')}
       </div>
@@ -399,7 +405,7 @@ const VIEWS = {
               <span class="avatar sm">${esc(x.name.replace(/^the\s+/i, '').slice(0, 1).toUpperCase())}</span>
               <span class="msg-main">
                 <strong>${esc(x.name)}</strong>
-                <span>${x.type === 'membership' ? `${esc(x.kind || 'Membership')} &middot; $${draft.settings.fee} paid` : esc(x.subject)}</span>
+                <span>${x.type === 'membership' ? `${esc(x.kind || 'Membership')} &middot; $${x.total ?? draft.settings.fee} ${x.method === 'check' ? 'by check (in the mail)' : 'paid online'}` : esc(x.subject)}</span>
               </span>
               <span class="tag ${x.type === 'membership' ? 'tag-soon' : ''}">${x.type === 'membership' ? 'Member' : 'Message'}</span>
               <time>${fmtDate(x.date, { month: 'short', day: 'numeric' })}</time>
@@ -410,6 +416,7 @@ const VIEWS = {
                 ${x.phone ? `<dt>Phone</dt><dd>${esc(x.phone)}</dd>` : ''}
                 ${x.address ? `<dt>Ortley Beach address</dt><dd>${esc(x.address)}</dd>` : ''}
                 ${x.type === 'membership' ? `<dt>Committee interest</dt><dd>${x.committee ? 'Yes' : 'No'}</dd>` : ''}
+                ${x.donation ? `<dt>Donation</dt><dd>$${x.donation}</dd>` : ''}
               </dl>
               ${x.message ? `<p class="msg-text">${esc(x.message)}</p>` : ''}
               <div class="msg-actions">
@@ -418,6 +425,73 @@ const VIEWS = {
               </div>
             </div>
           </details>`).join('') || '<p class="muted panel">Nothing here yet. Try the membership form on the public site.</p>'}
+      </div>`;
+  },
+
+  members() {
+    const f = sessionStorage.getItem('adm-member-filter') || 'all';
+    const q = (sessionStorage.getItem('adm-member-q') || '').toLowerCase();
+    const all = draft.members.map((m) => ({ m, status: memberStatus(m) }));
+    const count = (k) => all.filter((x) => x.status === k).length;
+    const list = all
+      .filter((x) => f === 'all' || (f === 'autorenew' ? x.m.autoRenew : x.status === f))
+      .filter((x) => !q || (x.m.name + ' ' + x.m.email + ' ' + x.m.address).toLowerCase().includes(q))
+      .sort((a, b) => a.m.name.localeCompare(b.m.name));
+    const LABEL = { current: 'Current', expired: 'Expired', pending: 'Check pending' };
+    const lapsed = count('expired');
+    return head('Members', `Membership year: ${currentTerm().label}`,
+      `<button type="button" class="btn btn-ghost btn-sm" data-export>Export (CSV)</button>
+       <button type="button" class="btn btn-coral btn-sm" data-remind ${lapsed ? '' : 'disabled'}>Send renewal reminder to ${lapsed}</button>`) + `
+      <div class="tiles">
+        <button type="button" class="tile" data-member-filter="current"><span>Current</span><strong>${count('current')}</strong><small>paid for this year</small></button>
+        <button type="button" class="tile" data-member-filter="expired"><span>Expired</span><strong>${lapsed}</strong><small>have not renewed yet</small></button>
+        <button type="button" class="tile" data-member-filter="pending"><span>Checks pending</span><strong>${count('pending')}</strong><small>waiting on the mail</small></button>
+        <button type="button" class="tile" data-member-filter="autorenew"><span>Auto-renew</span><strong>${all.filter((x) => x.m.autoRenew).length}</strong><small>renew each April</small></button>
+      </div>
+      <div class="toolbar">
+        <div class="chips">
+          ${[['all', 'All'], ['current', 'Current'], ['expired', 'Expired'], ['pending', 'Checks pending'], ['autorenew', 'Auto-renew']].map(([k, l]) => `<button type="button" class="chip ${f === k ? 'on' : ''}" data-member-filter="${k}">${l}</button>`).join('')}
+        </div>
+        <label class="search"><span class="sr">Search members</span><input type="search" placeholder="Search name, email or address" value="${esc(q)}" data-member-q></label>
+      </div>
+      <div class="panel flush">
+        <table class="tbl">
+          <thead><tr><th>Member</th><th>Ortley Beach address</th><th>Status</th><th>Paid through</th><th></th></tr></thead>
+          <tbody>
+            ${list.map(({ m, status }) => `
+              <tr>
+                <td><strong class="tbl-title">${esc(m.name)}</strong>${m.type === 'business' ? ' <span class="tag">Business</span>' : ''}<br><a class="small" href="mailto:${esc(m.email)}">${esc(m.email)}</a></td>
+                <td>${esc(m.address)}</td>
+                <td><span class="status status-${status}">${LABEL[status]}</span>${m.autoRenew ? '<br><small class="muted">Auto-renews</small>' : ''}${m.remindedAt ? `<br><small class="muted">Reminded ${fmtDate(m.remindedAt, { month: 'short', day: 'numeric' })}</small>` : ''}</td>
+                <td class="nowrap">${status === 'pending' ? '<span class="muted">When check arrives</span>' : m.paidThrough ? fmtDate(m.paidThrough, { month: 'short', day: 'numeric', year: 'numeric' }) : 'None'}</td>
+                <td class="row-actions">
+                  ${status === 'pending' ? `<button type="button" class="btn btn-navy btn-sm" data-check-in="${m.id}">Check received</button>` : ''}
+                  ${status === 'expired' ? `<a href="membership.html?renew=${esc(m.id)}" target="_blank" rel="noopener">Renew link</a>` : ''}
+                </td>
+              </tr>`).join('') || '<tr><td colspan="5" class="muted">No members match.</td></tr>'}
+          </tbody>
+        </table>
+      </div>`;
+  },
+
+  emails() {
+    const sample = draft.members.find((m) => memberStatus(m) === 'expired') || draft.members[0] || { name: 'Jane Smith', email: 'jane@example.com', id: '' };
+    return head('Member emails', 'Sent automatically. Edit the wording here; the preview updates as you type.') + `
+      <div class="emails-grid">
+        <section class="panel">
+          <h2>Receipt</h2>
+          <p class="muted">Sent right after someone joins, renews or donates.</p>
+          ${field('Subject', 'emails.receiptSubject', { full: true })}
+          ${field('Message', 'emails.receiptBody', { type: 'textarea', rows: 6, full: true, help: 'The payment details are added below this automatically.' })}
+        </section>
+        <section class="panel" data-preview="receipt">${emailPreview(draft, 'receipt', sample)}</section>
+        <section class="panel">
+          <h2>Renewal reminder</h2>
+          <p class="muted">Sent in March to members who have not renewed, and whenever you press "Send renewal reminder" on the Members screen. It includes a button that opens the form with their details filled in.</p>
+          ${field('Subject', 'emails.reminderSubject', { full: true })}
+          ${field('Message', 'emails.reminderBody', { type: 'textarea', rows: 6, full: true })}
+        </section>
+        <section class="panel" data-preview="reminder">${emailPreview(draft, 'reminder', sample)}</section>
       </div>`;
   },
 
@@ -608,11 +682,23 @@ function loginView() {
 
 app.addEventListener('input', (e) => {
   const t = e.target;
+  if (t.dataset.memberQ !== undefined) {
+    sessionStorage.setItem('adm-member-q', t.value);
+    render();
+    const box = $('[data-member-q]');
+    box.focus();
+    box.setSelectionRange(box.value.length, box.value.length);
+    return;
+  }
   if (t.dataset.rte) { markDirty(); return; }
   if (!t.name || !draft) return;
   const v = t.type === 'checkbox' ? t.checked : t.dataset.num !== undefined ? Number(t.value) : t.value;
   setPath(draft, t.name, v);
   markDirty();
+  if (t.name.startsWith('emails.')) {
+    const sample = draft.members.find((m) => memberStatus(m) === 'expired') || draft.members[0];
+    $$('[data-preview]').forEach((el) => { el.innerHTML = emailPreview(draft, el.dataset.preview, sample); });
+  }
 });
 
 app.addEventListener('change', async (e) => {
@@ -753,6 +839,24 @@ app.addEventListener('click', (e) => {
     return;
   }
   if (ds.export !== undefined) { exportCsv(); }
+  if (ds.memberFilter) { sessionStorage.setItem('adm-member-filter', ds.memberFilter); render(); return; }
+  if (ds.checkIn) {
+    const base = clone(load());
+    const m = base.members.find((x) => x.id === ds.checkIn);
+    m.pending = false;
+    m.paidThrough = currentTerm().end;
+    save(base, `Logged check from ${m.name}`);
+    fresh(); render(); toast(`${m.name} is now a current member. Receipt sent.`);
+    return;
+  }
+  if (ds.remind !== undefined) {
+    const base = clone(load());
+    const targets = base.members.filter((m) => memberStatus(m) === 'expired');
+    if (!targets.length || !confirm(`Email a renewal reminder to ${targets.length} member${targets.length === 1 ? '' : 's'}?`)) return;
+    targets.forEach((m) => { m.remindedAt = isoToday(); });
+    save(base, `Sent renewal reminders to ${targets.length} members`);
+    fresh(); render(); toast(`Reminder sent to ${targets.length} members (simulated)`);
+  }
 });
 
 // Opening an unread message marks it read.
@@ -771,8 +875,9 @@ app.addEventListener('toggle', (e) => {
 }, true);
 
 function exportCsv() {
-  const rows = draft.inbox.filter((x) => x.type === 'membership');
-  const cols = ['date', 'name', 'email', 'phone', 'address', 'kind', 'committee'];
+  const LABEL = { current: 'Current', expired: 'Expired', pending: 'Check pending' };
+  const cols = ['name', 'email', 'phone', 'address', 'type', 'status', 'paidThrough', 'autoRenew', 'committee', 'joined'];
+  const rows = draft.members.map((m) => ({ ...m, status: LABEL[memberStatus(m)] }));
   const csv = [cols.join(','), ...rows.map((r) => cols.map((c) => `"${String(r[c] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));

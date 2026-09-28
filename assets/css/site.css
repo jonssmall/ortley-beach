@@ -317,3 +317,56 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 1.5rem 0; }
 .toast { background: var(--navy); color: #fff; padding: .75rem 1.2rem; border-radius: 10px; box-shadow: var(--shadow); font-weight: 600; font-size: .9rem; transition: opacity .4s, transform .4s; }
 .toast-err { background: #b3261e; }
 .toast.out { opacity: 0; transform: translateY(8px); }
+
+/* Membership flow */
+.join { min-height: 420px; }
+.join .form h2 { margin-bottom: .25rem; }
+.steps { list-style: none; display: flex; gap: .5rem; padding: 0; margin: 0 0 1.5rem; font-size: .85rem; font-weight: 600; color: var(--muted); }
+.steps li { display: flex; align-items: center; gap: .45rem; flex: 1; padding-bottom: .6rem; border-bottom: 3px solid var(--line); }
+.steps span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--line); color: var(--muted); font-size: .75rem; flex: none; }
+.steps li.now { color: var(--navy); border-color: var(--coral); }
+.steps li.now span { background: var(--coral); color: #fff; }
+.steps li.done { color: var(--navy); border-color: var(--sea); }
+.steps li.done span { background: var(--sea); color: #fff; }
+@media (max-width: 460px) { .steps li { font-size: 0; gap: 0; } .steps li.now { font-size: .85rem; gap: .45rem; } }
+.demo-hint { font-size: .82rem; color: #6b5200; background: #fff8d9; border: 1px dashed #d8b53a; border-radius: 8px; padding: .6rem .8rem; margin: 0; }
+.demo-hint .linkbtn { font-weight: 700; color: #6b5200; }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--sea); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.notice { background: #fdeee8; border-left: 4px solid var(--coral); padding: .75rem 1rem; border-radius: 0 8px 8px 0; margin: .5rem 0 0; }
+.hello { display: flex; gap: 1rem; align-items: flex-start; }
+.hello p { margin: 0; }
+.bigcheck.sm { width: 44px; height: 44px; font-size: 1.3rem; margin: 0; flex: none; }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+@media (max-width: 520px) { .choice { grid-template-columns: 1fr; } }
+.choice-btn { text-align: left; background: #fff; border: 1px solid #c9d2da; border-radius: 12px; padding: 1rem; cursor: pointer; font: inherit; }
+.choice-btn:hover { border-color: var(--sea); background: var(--foam); }
+.choice-btn strong { display: block; color: var(--navy); }
+.choice-btn span { font-size: .85rem; color: var(--muted); }
+.summary { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.sumrow { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .9rem 1rem; border-bottom: 1px solid var(--line); }
+.sumrow > span:first-child strong { display: block; color: var(--navy); }
+.sumrow small { color: var(--muted); font-size: .82rem; }
+.sumrow-don { flex-wrap: wrap; }
+.donchips { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.donchips .chip { padding: .4rem .75rem; }
+.donother { display: inline-flex !important; align-items: center; gap: .2rem !important; font-weight: 600; color: var(--muted) !important; }
+.donother input { width: 84px !important; padding: .4rem .6rem !important; border-radius: 999px !important; }
+.sumtotal { background: var(--foam); font-weight: 700; color: var(--navy); font-size: 1.15rem; border-bottom: 0; }
+.paycard { display: grid; gap: .9rem; }
+.paycard p { margin: 0; }
+.checksteps { margin: 0; padding-left: 1.25rem; display: grid; gap: .5rem; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.preview { text-align: left; margin: 1rem 0; }
+.preview summary { cursor: pointer; font-weight: 600; color: var(--sea); text-align: center; margin-bottom: 1rem; }
+
+/* Email previews */
+.email { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; text-align: left; font-size: .95rem; }
+.email-meta { background: #f6f8fa; border-bottom: 1px solid var(--line); padding: .75rem 1rem; font-size: .85rem; display: grid; gap: .2rem; }
+.email-meta span { display: inline-block; width: 64px; color: var(--muted); }
+.email-body { padding: 1.25rem 1.5rem; }
+.email-brand { display: flex; align-items: center; gap: .5rem; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 3px solid var(--sea); }
+.email-brand strong { font: 650 1.2rem var(--serif); color: var(--navy); }
+.email-receipt { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.email-receipt td { padding: .5rem 0; border-bottom: 1px solid var(--line); }
+.email-receipt td:last-child { text-align: right; }
+.email-receipt .tot td { font-weight: 700; color: var(--navy); }

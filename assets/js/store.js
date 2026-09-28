@@ -205,7 +205,44 @@ function seed() {
       { id: uid(), type: 'message', date: '2026-09-18', name: 'Tom Keane', email: 'tkeane@example.com', subject: 'Parking on 3rd Ave', message: 'Will the Route 35 changes affect parking on the side streets near the boardwalk? Would like to raise it at the October meeting.', read: false },
       { id: uid(), type: 'membership', date: '2026-09-02', name: 'The Delgado Family', email: 'delgados@example.com', phone: '(732) 555-0187', address: '45 Kauffman Ave', kind: 'New member', paid: true, read: true },
     ],
+
+    members: seedMembers(),
+
+    emails: {
+      receiptSubject: 'Thank you for joining OBVTA',
+      receiptBody: 'Thank you for supporting the Ortley Beach Voters and Taxpayers Association. Your membership keeps our community\'s voice strong in Toms River and Trenton.\n\nWe hope to see you at our next meeting.',
+      reminderSubject: 'Time to renew your OBVTA membership',
+      reminderBody: 'Your OBVTA membership ends on March 31. Renewing takes less than a minute, and your details are already filled in.\n\nThank you for being part of the Ortley Beach community.',
+    },
   };
+}
+
+// Demo members, so returning-member lookup has someone to find. Try
+// tkeane@example.com (lapsed) or maria.r@example.com (already paid).
+function seedMembers() {
+  const m = (name, email, phone, address, type, paidThrough, joined, extra = {}) =>
+    ({ id: uid(), name, email, phone, address, type, paidThrough, joined, autoRenew: false, pending: false, committee: false, ...extra });
+  return [
+    m('Maria Russo', 'maria.r@example.com', '(732) 555-0142', '112 Fielder Ave', 'household', '2027-03-31', '2014-05-10', { autoRenew: true }),
+    m('The Delgado Family', 'delgados@example.com', '(732) 555-0187', '45 Kauffman Ave', 'household', '2027-03-31', '2026-09-02'),
+    m('Tom Keane', 'tkeane@example.com', '(732) 555-0119', '18 Third Ave', 'household', '2026-03-31', '2016-06-18'),
+    m('Linda and Frank Moretti', 'morettis@example.com', '(908) 555-0163', '203 Ocean Ter', 'household', '2026-03-31', '2013-04-20'),
+    m('Surfside Bait & Tackle', 'info@surfside.example.com', '(732) 555-0171', '1500 Route 35 N', 'business', '2027-03-31', '2018-05-01'),
+    m('Kevin O\'Brien', 'kob@example.com', '(732) 555-0134', '9 Bay Blvd', 'household', '2026-03-31', '2019-07-13'),
+    m('Priya Shah', 'pshah@example.com', '(201) 555-0198', '77 Kearney Ave', 'household', '2027-03-31', '2021-08-14', { pending: true }),
+  ];
+}
+
+// Membership runs April 1 to March 31. Before April we are still in the term
+// that started last year.
+export function currentTerm(now = new Date()) {
+  const y = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+  return { start: `${y}-04-01`, end: `${y + 1}-03-31`, label: `April ${y} to March ${y + 1}` };
+}
+
+export function memberStatus(member, now = new Date()) {
+  if (member.pending) return 'pending';
+  return member.paidThrough >= currentTerm(now).end ? 'current' : 'expired';
 }
 
 function ar(month, minutes, treasurer) {
@@ -234,7 +271,13 @@ export function load() {
   if (cache) return cache;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return (cache = JSON.parse(raw));
+    if (raw) {
+      // Fill in anything added to the seed since this browser last saved.
+      const data = JSON.parse(raw);
+      const base = seed();
+      for (const k of Object.keys(base)) if (!(k in data)) data[k] = base[k];
+      return (cache = data);
+    }
   } catch (e) { /* fall through to seed */ }
   cache = seed();
   return cache;
