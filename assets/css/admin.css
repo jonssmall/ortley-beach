@@ -16,7 +16,7 @@ body.admin { background: #f3f5f7; }
 .adm { display: grid; grid-template-columns: 250px 1fr; min-height: calc(100vh - 37px); }
 .side { background: var(--navy); color: #c2d0dc; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
 .side-brand { display: flex; align-items: center; gap: .7rem; padding: 1.25rem 1.25rem 1rem; color: #fff; text-decoration: none; }
-.side-brand strong { display: block; font: 650 1.25rem/1 var(--serif); }
+.side-brand strong { display: block; font: 700 1.25rem/1 var(--serif); }
 .side-brand small { color: #8ea5b9; font-size: .75rem; }
 .side-nav { display: grid; align-content: start; gap: 2px; padding: .5rem .75rem; overflow-y: auto; flex: 1; }
 .side-nav a { display: flex; align-items: center; gap: .7rem; color: #c2d0dc; text-decoration: none; padding: .6rem .75rem; border-radius: 8px; font-weight: 500; font-size: .95rem; }
@@ -67,7 +67,7 @@ body.admin { background: #f3f5f7; }
 .f small { color: var(--muted); font-size: .8rem; }
 .f input, .f textarea, .f select, .addrow input { font: 400 .95rem var(--sans); padding: .6rem .75rem; border: 1px solid #c9d2da; border-radius: 8px; background: #fff; color: var(--ink); width: 100%; }
 .f input:focus, .f textarea:focus, .f select:focus, .addrow input:focus, .title-input:focus { outline: 2px solid var(--sea); outline-offset: 0; border-color: var(--sea); }
-.title-input { width: 100%; font: 650 1.6rem/1.2 var(--serif); color: var(--navy); border: 0; border-bottom: 1px solid var(--line); padding: .25rem 0 .75rem; margin-bottom: 1rem; background: none; }
+.title-input { width: 100%; font: 700 1.6rem/1.2 var(--serif); color: var(--navy); border: 0; border-bottom: 1px solid var(--line); padding: .25rem 0 .75rem; margin-bottom: 1rem; background: none; }
 .f + .f, .panel > .f + .f { margin-top: 1rem; }
 .fgrid > .f, .stats-edit .f { margin-top: 0 !important; }
 
@@ -139,7 +139,7 @@ body.admin { background: #f3f5f7; }
 .tile { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1.1rem 1.2rem; text-decoration: none; color: var(--ink); transition: border-color .15s, box-shadow .15s; }
 .tile:hover { border-color: var(--sea); box-shadow: var(--shadow); color: var(--ink); }
 .tile span { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-.tile strong { display: block; font: 650 1.9rem/1.2 var(--serif); color: var(--navy); margin: .3rem 0 .1rem; }
+.tile strong { display: block; font: 700 1.9rem/1.2 var(--serif); color: var(--navy); margin: .3rem 0 .1rem; }
 .tile small { color: var(--muted); }
 .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.25rem; }
 .panel-wide { grid-column: 1 / -1; }
