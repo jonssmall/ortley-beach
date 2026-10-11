@@ -339,7 +339,6 @@ const VIEWS = {
       <section class="panel">
         <h2>About us</h2>
         ${rte('Body', 'pages.about')}
-        <div class="fgrid">${field('Signed by', 'pages.president')}</div>
       </section>
       <section class="panel">
         <h2>Strategic plan</h2>

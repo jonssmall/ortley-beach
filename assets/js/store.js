@@ -157,7 +157,6 @@ function seed() {
         '<p>OBVTA was largely responsible for working with the NJ DEP to obtain the easements that allowed the current dune system to be built. We continue to press Toms River and the US Army Corps of Engineers to maintain our dunes and beach.</p>',
       mission:
         'To improve the quality of life in the Township of Toms River, NJ section known as Ortley Beach.',
-      president: 'Anthony Colucci',
       strategic:
         '<p>The OBVTA Board of Directors asked members for their concerns and recommendations after Superstorm Sandy, and has since updated the Strategic Plan and our Priorities of Focus as the community continues to rebuild.</p>' +
         '<p>If you have ideas about making Ortley Beach more resilient to future storms, or a better community in general, please email the OBVTA President.</p>',

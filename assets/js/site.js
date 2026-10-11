@@ -216,7 +216,7 @@ const PAGES = {
             <h1>${esc(s.heroTitle)}</h1>
             <p class="hero-text">${esc(s.heroText)}</p>
             <div class="hero-ctas">
-              <a class="btn btn-coral" href="membership.html">Join for $${esc(s.fee)} a year</a>
+              <a class="btn btn-coral" href="membership.html">Join Today</a>
               <a class="btn btn-light" href="meetings.html">Meetings &amp; minutes</a>
             </div>
             ${editPin('home', 'Edit hero')}
@@ -287,7 +287,6 @@ const PAGES = {
             ${editPin('pages', 'Edit page')}
             <blockquote class="mission"><span class="kicker">Our mission</span>${esc(d.pages.mission)}</blockquote>
             ${sanitize(d.pages.about)}
-            <p class="sig">${esc(d.pages.president)}<br><span class="muted">President, ${esc(s.shortName)}</span></p>
           </div>
           <aside class="card pad">
             <h3>Meet us in person</h3>
@@ -496,12 +495,6 @@ const PAGES = {
               ${s.whyJoin.map((r) => `<li><strong>${esc(r.title)}.</strong> ${esc(r.text)}</li>`).join('')}
               <li><strong>Supports the work.</strong> Dues fund meeting space, mailings and our advocacy with Toms River, Ocean County and the State.</li>
             </ul>
-            <div class="card pad">
-              <h3>Good to know</h3>
-              <p>Everyone uses the same form, whether you're new or renewing. If we already have your details, we fill them in.</p>
-              <p>You can pay online or mail a check. Both options are on the payment step.</p>
-              <p class="small muted">Questions? Email <a href="mailto:${esc(s.email)}">${esc(s.email)}</a>.</p>
-            </div>
           </div>
         </div>
       </section>`;
